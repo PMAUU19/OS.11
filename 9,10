@@ -1,0 +1,478 @@
+Slip 1 — Question 1 (15 Marks)
+Question: Write a simulation program for demand paging and show the page scheduling and total number of page faults according to the Optimal Page Replacement algorithm. Assume the memory of n frames.
+Reference string: 8, 5, 7, 8, 5, 7, 2, 3, 7, 3, 5, 9, 4, 6, 2
+Complete C program
+
+#include <stdio.h>
+
+int main()
+{
+    int pages[] = {8, 5, 7, 8, 5, 7, 2, 3,
+                   7, 3, 5, 9, 4, 6, 2};
+
+    int n = 15, frames, i, j, k;
+    int pageFaults = 0, hit;
+    int future, replace, farthest;
+
+    printf("Enter number of frames: ");
+    scanf("%d", &frames);
+
+    int memory[frames];
+
+    for (i = 0; i < frames; i++)
+        memory[i] = -1;
+
+    printf("\nPage\tFrames\t\tStatus\n");
+
+    for (i = 0; i < n; i++)
+    {
+        hit = 0;
+
+        for (j = 0; j < frames; j++)
+        {
+            if (memory[j] == pages[i])
+            {
+                hit = 1;
+                break;
+            }
+        }
+
+        if (hit == 0)
+        {
+            pageFaults++;
+
+            replace = -1;
+            farthest = -1;
+
+            for (j = 0; j < frames; j++)
+            {
+                if (memory[j] == -1)
+                {
+                    replace = j;
+                    break;
+                }
+
+                future = n;
+
+                for (k = i + 1; k < n; k++)
+                {
+                    if (memory[j] == pages[k])
+                    {
+                        future = k;
+                        break;
+                    }
+                }
+
+                if (future > farthest)
+                {
+                    farthest = future;
+                    replace = j;
+                }
+            }
+
+            memory[replace] = pages[i];
+        }
+
+        printf("%d\t", pages[i]);
+
+        for (j = 0; j < frames; j++)
+        {
+            if (memory[j] == -1)
+                printf("- ");
+            else
+                printf("%d ", memory[j]);
+        }
+
+        if (hit == 1)
+            printf("\tHit");
+        else
+            printf("\tPage Fault");
+
+        printf("\n");
+    }
+
+    printf("\nTotal Page Faults = %d\n", pageFaults);
+
+    return 0;
+}
+
+Output 
+Enter number of frames: 3
+
+Page    Frames          Status
+8       8 - -            Page Fault
+5       8 5 -            Page Fault
+7       8 5 7            Page Fault
+8       8 5 7            Hit
+5       8 5 7            Hit
+7       8 5 7            Hit
+
+Question 2 (15 Marks)
+Question: Write a program to simulate Non-preemptive Shortest Job First (SJF) scheduling. Input the arrival time and first CPU burst for different processes. Generate the next CPU burst randomly. Display the Gantt chart, turnaround time, and waiting time for each process. Find the average waiting time and average turnaround time.
+Complete C program
+This beginner-friendly version takes arrival time and the first burst as input, generates a second burst randomly, and uses the combined CPU time for non-preemptive SJF scheduling.
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int main()
+{
+    int n, i, j, time = 0, completed = 0;
+    int at[20], bt1[20], bt2[20], bt[20];
+    int ct[20], tat[20], wt[20], done[20] = {0};
+    int p[20], min, pos;
+    float avgWT = 0, avgTAT = 0;
+
+    srand(time(NULL));
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    for (i = 0; i < n; i++)
+    {
+        p[i] = i + 1;
+
+        printf("Enter arrival time of P%d: ", i + 1);
+        scanf("%d", &at[i]);
+
+        printf("Enter first CPU burst of P%d: ", i + 1);
+        scanf("%d", &bt1[i]);
+
+        bt2[i] = rand() % 8 + 1;
+        bt[i] = bt1[i] + bt2[i];
+    }
+
+    printf("\nGenerated second CPU bursts:\n");
+    for (i = 0; i < n; i++)
+        printf("P%d: %d\n", p[i], bt2[i]);
+
+    printf("\nGantt Chart:\n");
+
+    while (completed < n)
+    {
+        min = 9999;
+        pos = -1;
+
+        for (i = 0; i < n; i++)
+        {
+            if (!done[i] && at[i] <= time && bt[i] < min)
+            {
+                min = bt[i];
+                pos = i;
+            }
+        }
+
+        if (pos == -1)
+        {
+            time++;
+            continue;
+        }
+
+        printf("| P%d (%d-%d) ",
+               p[pos], time, time + bt[pos]);
+
+        time += bt[pos];
+        ct[pos] = time;
+        tat[pos] = ct[pos] - at[pos];
+        wt[pos] = tat[pos] - bt[pos];
+
+        done[pos] = 1;
+        completed++;
+    }
+
+    printf("|\n\nProcess\tAT\tBT\tCT\tTAT\tWT\n");
+
+    for (i = 0; i < n; i++)
+    {
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n",
+               p[i], at[i], bt[i],
+               ct[i], tat[i], wt[i]);
+
+        avgWT += wt[i];
+        avgTAT += tat[i];
+    }
+
+    printf("\nAverage Waiting Time = %.2f",
+           avgWT / n);
+
+    printf("\nAverage Turnaround Time = %.2f\n",
+           avgTAT / n);
+
+    return 0;
+}
+
+
+Slip 2 — Question 1 (15 Marks)
+Question: Write a program to simulate Round Robin (RR) scheduling. Input the arrival time and first CPU burst for different processes. Give the time quantum as input. Generate the next CPU burst randomly. Display the Gantt chart, turnaround time, and waiting time for each process. Find the average waiting time and turnaround time.
+Complete C program
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int main()
+{
+    int n, tq, i, time = 0, done;
+    int at[20], bt1[20], bt2[20], bt[20];
+    int rem[20], ct[20], tat[20], wt[20];
+    int p[20], first[20] = {0};
+    float avgWT = 0, avgTAT = 0;
+
+    srand(time(NULL));
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    for (i = 0; i < n; i++)
+    {
+        p[i] = i + 1;
+
+        printf("Enter arrival time of P%d: ", i + 1);
+        scanf("%d", &at[i]);
+
+        printf("Enter first CPU burst of P%d: ", i + 1);
+        scanf("%d", &bt1[i]);
+
+        bt2[i] = rand() % 8 + 1;
+        bt[i] = bt1[i] + bt2[i];
+        rem[i] = bt[i];
+    }
+
+    printf("Enter time quantum: ");
+    scanf("%d", &tq);
+
+    if (tq <= 0)
+    {
+        printf("Time quantum must be positive.\n");
+        return 1;
+    }
+
+    printf("\nGenerated second bursts:\n");
+    for (i = 0; i < n; i++)
+        printf("P%d: %d\n", p[i], bt2[i]);
+
+    printf("\nGantt Chart:\n");
+
+    while (1)
+    {
+        done = 1;
+
+        for (i = 0; i < n; i++)
+        {
+            if (rem[i] > 0)
+            {
+                done = 0;
+
+                if (at[i] > time)
+                    continue;
+
+                if (!first[i])
+                    first[i] = 1;
+
+                if (rem[i] > tq)
+                {
+                    printf("| P%d (%d-%d) ",
+                           p[i], time, time + tq);
+
+                    time += tq;
+                    rem[i] -= tq;
+                }
+                else
+                {
+                    printf("| P%d (%d-%d) ",
+                           p[i], time, time + rem[i]);
+
+                    time += rem[i];
+                    rem[i] = 0;
+                    ct[i] = time;
+                }
+            }
+        }
+
+        if (done)
+            break;
+
+        /* Advance time if no process has arrived */
+        if (done == 0)
+        {
+            int available = 0;
+
+            for (i = 0; i < n; i++)
+                if (rem[i] > 0 && at[i] <= time)
+                    available = 1;
+
+            if (!available)
+                time++;
+        }
+    }
+
+    printf("|\n\nProcess\tAT\tBT\tCT\tTAT\tWT\n");
+
+    for (i = 0; i < n; i++)
+    {
+        tat[i] = ct[i] - at[i];
+        wt[i] = tat[i] - bt[i];
+
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n",
+               p[i], at[i], bt[i],
+               ct[i], tat[i], wt[i]);
+
+        avgWT += wt[i];
+        avgTAT += tat[i];
+    }
+
+    printf("\nAverage Waiting Time = %.2f",
+           avgWT / n);
+
+    printf("\nAverage Turnaround Time = %.2f\n",
+           avgTAT / n);
+
+    return 0;
+}
+
+Slip 2 — Question 2 (15 Marks): LOOK Disk Scheduling
+Question: Write a simulation program for disk scheduling using the LOOK algorithm. Accept the total number of disk blocks, disk request string, and current head position from the user. Display the list of requests in the order served and the total number of head movements.
+Given:
+Request string: 55, 58, 39, 18, 90, 160, 150, 38
+Starting head position: 100
+Direction: Left
+Correct complete C program
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    int blocks, n, head, direction;
+    int req[100], i, j, temp;
+    int current, total = 0;
+
+    printf("Enter total number of disk blocks: ");
+    scanf("%d", &blocks);
+
+    printf("Enter number of requests: ");
+    scanf("%d", &n);
+
+    if (blocks <= 0 || n <= 0 || n > 100)
+    {
+        printf("Invalid input!\n");
+        return 1;
+    }
+
+    printf("Enter disk request string:\n");
+    for (i = 0; i < n; i++)
+    {
+        scanf("%d", &req[i]);
+
+        if (req[i] < 0 || req[i] >= blocks)
+        {
+            printf("Invalid disk request!\n");
+            return 1;
+        }
+    }
+
+    printf("Enter initial head position: ");
+    scanf("%d", &head);
+
+    if (head < 0 || head >= blocks)
+    {
+        printf("Invalid head position!\n");
+        return 1;
+    }
+
+    printf("Enter direction (0 = Left, 1 = Right): ");
+    scanf("%d", &direction);
+
+    if (direction != 0 && direction != 1)
+    {
+        printf("Invalid direction!\n");
+        return 1;
+    }
+
+    /* Sort requests in ascending order */
+    for (i = 0; i < n - 1; i++)
+    {
+        for (j = i + 1; j < n; j++)
+        {
+            if (req[i] > req[j])
+            {
+                temp = req[i];
+                req[i] = req[j];
+                req[j] = temp;
+            }
+        }
+    }
+
+    current = head;
+
+    printf("\nLOOK request service order:\n");
+    printf("%d", head);
+
+    if (direction == 0)
+    {
+        /* First serve requests to the left */
+        for (i = n - 1; i >= 0; i--)
+        {
+            if (req[i] < head)
+            {
+                total += abs(current - req[i]);
+                current = req[i];
+                printf(" -> %d", current);
+            }
+        }
+
+        /* Then reverse and serve requests to the right */
+        for (i = 0; i < n; i++)
+        {
+            if (req[i] >= head)
+            {
+                total += abs(current - req[i]);
+                current = req[i];
+                printf(" -> %d", current);
+            }
+        }
+    }
+    else
+    {
+        /* First serve requests to the right */
+        for (i = 0; i < n; i++)
+        {
+            if (req[i] > head)
+            {
+                total += abs(current - req[i]);
+                current = req[i];
+                printf(" -> %d", current);
+            }
+        }
+
+        /* Then reverse and serve requests to the left */
+        for (i = n - 1; i >= 0; i--)
+        {
+            if (req[i] <= head)
+            {
+                total += abs(current - req[i]);
+                current = req[i];
+                printf(" -> %d", current);
+            }
+        }
+    }
+
+    printf("\nTotal head movements = %d\n", total);
+
+    return 0;
+}
+
+output 
+Enter total number of disk blocks: 200
+Enter number of requests: 8
+Enter disk request string:
+55 58 39 18 90 160 150 38
+Enter initial head position: 100
+Enter direction (0 = Left, 1 = Right): 0
+LOOK request service order:
+100 -> 90 -> 58 -> 55 -> 39 -> 38 -> 18 -> 150 -> 160
+
+Total head movements = 242
